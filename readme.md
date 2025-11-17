@@ -1,4 +1,4 @@
-# Documentación
+# Sistema Meteorológico Distribuido con Go, Docker y PostgreSQL
 
 ## Requisitos previos:
 

@@ -15,7 +15,7 @@ services:
 
   servicioA:
     build: 
-      context: ./A
+      context: ./servicioBBDD
       dockerfile: Dockerfile
     image: servicio-a:latest  
     container_name: servicio-a
@@ -33,7 +33,7 @@ services:
 
   servicioB:
     build: 
-      context: ./B
+      context: ./servicioConsultas
       dockerfile: Dockerfile
     image: servicio-b:latest  
     container_name: servicio-b
