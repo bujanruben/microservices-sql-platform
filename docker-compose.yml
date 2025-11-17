@@ -1,0 +1,57 @@
+services:
+  meteo-db:
+    image: postgres:18
+    container_name: meteo-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: meteo
+    ports:
+      - "5432:5432"
+    volumes:
+      - meteo-data:/var/lib/postgresql  
+    networks:
+      - meteo-network
+
+  servicioA:
+    build: 
+      context: ./A
+      dockerfile: Dockerfile
+    image: servicio-a:latest  
+    container_name: servicio-a
+    depends_on:
+      - meteo-db
+    environment:
+      DB_HOST: meteo-db
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: meteo
+    ports:
+      - "8080:8080"
+    networks:
+      - meteo-network
+
+  servicioB:
+    build: 
+      context: ./B
+      dockerfile: Dockerfile
+    image: servicio-b:latest  
+    container_name: servicio-b
+    depends_on:
+      - meteo-db
+    environment:
+      DB_HOST: meteo-db
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: meteo
+    ports:
+      - "8081:8081"
+    networks:
+      - meteo-network
+
+volumes:
+  meteo-data:
+
+networks:
+  meteo-network:
+    driver: bridge

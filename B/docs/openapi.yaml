@@ -1,0 +1,202 @@
+openapi: 3.0.3
+info:
+  title: API Meteorológica
+  description: API para consultar datos meteorológicos mediante http con opciones de agregación y caché
+  version: 1.0.0
+  contact:
+    name: Rubén Buján Vide
+    email: bujanvideruben@gmail.com
+
+servers:
+  - url: http://localhost:8081
+    description: Servidor de desarrollo
+
+paths:
+  /weather/{city}:
+    get:
+      summary: Obtener datos meteorológicos para una ciudad
+      description: |
+        Consulta datos meteorológicos históricos para una ciudad específica.
+        Soporta diferentes tipos de agregación y conversión de unidades.
+        Implementa caché con TTL de 10 minutos y reintentos exponenciales.
+      parameters:
+        - name: city
+          in: path
+          required: true
+          description: Nombre de la ciudad
+          schema:
+            type: string
+            example: "Madrid"
+        - name: date
+          in: query
+          required: true
+          description: Fecha de inicio en formato YYYY-MM-DD
+          schema:
+            type: string
+            format: date
+            example: "2024-01-15"
+        - name: days
+          in: query
+          required: false
+          description: Número de días a consultar (1-10)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 10
+            default: 5
+            example: 5
+        - name: unit
+          in: query
+          required: false
+          description: Unidad de temperatura
+          schema:
+            type: string
+            enum: [C, F]
+            default: C
+            example: "C"
+        - name: agg
+          in: query
+          required: false
+          description: Tipo de agregación de datos
+          schema:
+            type: string
+            enum: [daily, rolling7]
+            example: "daily"
+      responses:
+        '200':
+          description: Datos meteorológicos obtenidos exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  city:
+                    type: string
+                    description: Ciudad consultada
+                    example: "Madrid"
+                  from:
+                    type: string
+                    format: date
+                    description: Fecha de inicio del período
+                    example: "2024-01-15"
+                  to:
+                    type: string
+                    format: date
+                    description: Fecha de fin del período
+                    example: "2024-01-19"
+                  days:
+                    type: integer
+                    description: Número de días consultados
+                    example: 5
+                  unit:
+                    type: string
+                    description: Unidad de temperatura utilizada
+                    example: "C"
+                  agg:
+                    type: string
+                    description: Tipo de agregación aplicada
+                    example: "daily"
+                  data:
+                    type: array
+                    description: Array de datos meteorológicos
+                    items:
+                      $ref: '#/components/schemas/WeatherData'
+                  count:
+                    type: integer
+                    description: Número de registros devueltos
+                    example: 5
+                  message:
+                    type: string
+                    description: Mensaje informativo (solo cuando no hay datos)
+                    example: "No se encontraron datos"
+        '400':
+          description: Parámetros de solicitud inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '405':
+          description: Método HTTP no permitido
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Servicio de base de datos no disponible
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    WeatherData:
+      type: object
+      properties:
+        fecha:
+          type: string
+          format: date
+          description: Fecha del registro
+          example: "2024-01-15"
+        ciudad:
+          type: string
+          description: Ciudad del registro
+          example: "Madrid"
+        tempMax:
+          type: number
+          format: float
+          description: Temperatura máxima del día
+          example: 15.5
+        tempMin:
+          type: number
+          format: float
+          description: Temperatura mínima del día
+          example: 5.2
+        precipitacion:
+          type: number
+          format: float
+          description: Precipitación acumulada (mm)
+          example: 2.1
+        nubosidad:
+          type: number
+          format: float
+          description: Nubosidad promedio (%)
+          example: 45.8
+      required:
+        - fecha
+        - ciudad
+        - tempMax
+        - tempMin
+        - precipitacion
+        - nubosidad
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Descripción del error
+          example: "Ciudad y fecha son obligatorios"
+      required:
+        - error
+
+  responses:
+    MethodNotAllowed:
+      description: Método HTTP no permitido
+    ServiceUnavailable:
+      description: Servicio temporalmente no disponible
+
+  parameters:
+    CityPathParam:
+      name: city
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Nombre de la ciudad
+
+tags:
+  - name: Weather
+    description: Operaciones relacionadas con datos meteorológicos
